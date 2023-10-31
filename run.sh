@@ -1,4 +1,1 @@
-cmake . -B build
-cd build
-make
-./benchmark/benchmark
+docker run  --gpus=all --runtime=nvidia --rm -v $(pwd):/BLASComp -i -t blascomp ./dockerscripts/run.sh

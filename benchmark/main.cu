@@ -1,5 +1,6 @@
 #include "level1/level1.h"
+#include <stdio.h>
 
 int main(){
-    myblas_SSCAL(0, 0, 0);
+
 }

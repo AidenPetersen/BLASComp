@@ -12,3 +12,7 @@ target_include_directories(${PROJECT_NAME}
 
 set_target_properties(${PROJECT_NAME} PROPERTIES
         CUDA_SEPARABLE_COMPILATION ON)
+
+
+enable_testing()
+add_subdirectory(tests)

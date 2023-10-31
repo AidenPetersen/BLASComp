@@ -1,0 +1,1 @@
+docker run  --gpus=all --runtime=nvidia --rm -v $(pwd):/BLASComp -i -t blascomp ./dockerscripts/debug.sh
