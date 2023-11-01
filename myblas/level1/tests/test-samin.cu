@@ -9,7 +9,7 @@ int main() {
 
     // Allocate h_A h_B in host memory
     float* h_A = (float*)malloc(size);
-    float* h_result = (float*)malloc(sizeof(float));
+    int* h_result = (int*)malloc(sizeof(int));
     // Initialize inputs
     for (int i = 0; i < N; i++) {
         h_A[i] = i;
@@ -18,23 +18,15 @@ int main() {
     // Allocate vectors in device memory
     float* d_A;
     cudaMalloc(&d_A, size);
-    float* d_result;
-    cudaMalloc(&d_result, sizeof(float));
+    int* d_result;
+    cudaMalloc(&d_result, sizeof(int));
 
     // Copy vectors from host to device
     cudaMemcpy(d_A, h_A, size, cudaMemcpyHostToDevice);
 
-    int threadsPerBlock = 256;
-    int blocksPerGrid = (N + threadsPerBlock - 1) / threadsPerBlock;
-
-    myblas_SNRM2<<<1, N>>>(N, d_A, 1, d_result);
+    myblas_SAMIN<<<1, N>>>(N, d_A, 1, d_result);
 
     cudaMemcpy(h_result, d_result, sizeof(float), cudaMemcpyDeviceToHost);
-    float expected;
-    for (int i = 0; i < N; i++) {
-        expected += i * i;
-    }
-    expected = sqrt(expected);
-    printf("expected: %f\nreal: %f", expected, *h_result);
+    float expected = 0;
     exit(!(*h_result == expected));
 }

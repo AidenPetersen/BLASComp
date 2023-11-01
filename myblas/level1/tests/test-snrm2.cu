@@ -4,7 +4,7 @@
 #include "level1/level1.h"
 
 int main() {
-    int N = 5;
+    int N = 10;
     size_t size = N * sizeof(float);
 
     // Allocate h_A h_B in host memory
@@ -24,9 +24,6 @@ int main() {
     // Copy vectors from host to device
     cudaMemcpy(d_A, h_A, size, cudaMemcpyHostToDevice);
 
-    int threadsPerBlock = 256;
-    int blocksPerGrid = (N + threadsPerBlock - 1) / threadsPerBlock;
-
     myblas_SNRM2<<<1, N>>>(N, d_A, 1, d_result);
 
     cudaMemcpy(h_result, d_result, sizeof(float), cudaMemcpyDeviceToHost);
@@ -35,6 +32,5 @@ int main() {
         expected += i * i;
     }
     expected = sqrt(expected);
-    printf("expected: %f\nreal: %f", expected, *h_result);
     exit(!(*h_result == expected));
 }
