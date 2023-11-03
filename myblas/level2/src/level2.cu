@@ -193,4 +193,143 @@ __global__ void myblas_STPMV(char uplo, char trans, char diag, int n,
 }
 
 __global__ void myblas_STRSV(char uplo, char trans, char diag, int n,
-                             const float *A, int lda, float *x, int incx) {}
+                             const float *A, int lda, float *x, int incx) {
+    int row = blockDim.x * blockIdx.x + threadIdx.x;
+    float sum = x[row * incx];
+    if (uplo == 'L') {
+        for (int i = 0; i < n; i++) {
+            if (i == row) {
+                if (diag != 'U') {
+                    x[i] = sum / A[row * n + i];
+                } else {
+                    x[i] = sum;
+                }
+            }
+            __syncthreads();
+            if (i < row) {
+                sum -= x[i] * A[row * n + i];
+            }
+            __syncthreads();
+        }
+    } else {
+        for (int i = n - 1; i >= 0; i--) {
+            if (i == row) {
+                if (diag != 'U') {
+                    x[i] = sum / A[row * n + i];
+                } else {
+                    x[i] = sum;
+                }
+            }
+            __syncthreads();
+            if (i < row) {
+                sum -= x[i] * A[row * n + i];
+            }
+            __syncthreads();
+        }
+    }
+}
+
+// Same implementation as triangle, can't do it faster in parallel because of
+// dependencies (based on my limited parallel algorithms knowledge)
+__global__ void myblas_STBSV(char uplo, char trans, char diag, int n, int k,
+                             const float *A, int lda, float *x, int incx) {
+    int row = blockDim.x * blockIdx.x + threadIdx.x;
+    float sum = x[row * incx];
+    if (uplo == 'L') {
+        for (int i = 0; i < n; i++) {
+            if (i == row) {
+                if (diag != 'U') {
+                    x[i] = sum / A[row * n + i];
+                } else {
+                    x[i] = sum;
+                }
+            }
+            __syncthreads();
+            if (i < row) {
+                sum -= x[i] * A[row * n + i];
+            }
+            __syncthreads();
+        }
+    } else {
+        for (int i = n - 1; i >= 0; i--) {
+            if (i == row) {
+                if (diag != 'U') {
+                    x[i] = sum / A[row * n + i];
+                } else {
+                    x[i] = sum;
+                }
+            }
+            __syncthreads();
+            if (i < row) {
+                sum -= x[i] * A[row * n + i];
+            }
+            __syncthreads();
+        }
+    }
+}
+
+__global__ void myblas_STPSV(char uplo, char trans, char diag, int n,
+                             const float *AP, float *x, int incx) {
+    // I'm not doing packed ;(
+}
+
+__global__ void myblas_SGER(int m, int n, const float *alpha, const float *x,
+                            int incx, const float *y, int incy, float *A,
+                            int lda) {
+    int col = blockDim.x * blockIdx.x + threadIdx.x;
+    int row = blockDim.y * blockIdx.y + threadIdx.y;
+
+    A[row * n + col] =
+        A[row * n + col] + (*alpha) * x[row * incx] * y[col * incy];
+}
+
+__global__ void myblas_SSYR(char uplo, int n, const float *alpha,
+                            const float *x, int incx, float *A, int lda) {
+    int col = blockDim.x * blockIdx.x + threadIdx.x;
+    int row = blockDim.y * blockIdx.y + threadIdx.y;
+    if (uplo == 'U') {
+        if (col < row) {
+            A[row * n + col] =
+                A[col * n + row] + (*alpha) * x[row * incx] * x[col * incx];
+        } else {
+            A[row * n + col] =
+                A[row * n + col] + (*alpha) * x[row * incx] * x[col * incx];
+        }
+    } else {
+        if (row < col) {
+            A[row * n + col] =
+                A[col * n + row] + (*alpha) * x[row * incx] * x[col * incx];
+        } else {
+            A[row * n + col] =
+                A[row * n + col] + (*alpha) * x[row * incx] * x[col * incx];
+        }
+    }
+}
+
+__global__ void myblas_SSYR2(char uplo, int n, const float *alpha,
+                             const float *x, int incx, const float *y, int incy,
+                             float *A, int lda) {
+    int col = blockDim.x * blockIdx.x + threadIdx.x;
+    int row = blockDim.y * blockIdx.y + threadIdx.y;
+    if (uplo == 'U') {
+        if (col < row) {
+            A[row * n + col] = A[col * n + row] +
+                               (*alpha) * x[row * incx] * x[col * incx] +
+                               (*alpha) * x[col * incx] * x[row * incx];
+        } else {
+            A[row * n + col] = A[row * n + col] +
+                               (*alpha) * x[row * incx] * x[col * incx] +
+                               (*alpha) * x[col * incx] * x[row * incx];
+        }
+    } else {
+        if (row < col) {
+            A[row * n + col] = A[col * n + row] +
+                               (*alpha) * x[row * incx] * x[col * incx] +
+                               (*alpha) * x[col * incx] * x[row * incx];
+        } else {
+            A[row * n + col] = A[row * n + col] +
+                               (*alpha) * x[row * incx] * x[col * incx] +
+                               (*alpha) * x[col * incx] * x[row * incx];
+        }
+    }
+}

@@ -6,6 +6,11 @@ list(APPEND TESTS test-sgbmv)
 list(APPEND TESTS test-ssymv)
 list(APPEND TESTS test-ssbmv)
 list(APPEND TESTS test-stbmv)
+list(APPEND TESTS test-strsv)
+list(APPEND TESTS test-stbsv)
+list(APPEND TESTS test-sger)
+list(APPEND TESTS test-ssyr)
+list(APPEND TESTS test-ssyr2)
 
 
 foreach(test ${TESTS})

@@ -30,3 +30,20 @@ __global__ void myblas_STPMV(char uplo, char trans, char diag, int n,
 
 __global__ void myblas_STRSV(char uplo, char trans, char diag, int n,
                              const float *A, int lda, float *x, int incx);
+
+__global__ void myblas_STBSV(char uplo, char trans, char diag, int n, int k,
+                             const float *A, int lda, float *x, int incx);
+
+__global__ void myblas_STPSV(char uplo, char trans, char diag, int n,
+                             const float *AP, float *x, int incx);
+
+__global__ void myblas_SGER(int m, int n, const float *alpha, const float *x,
+                            int incx, const float *y, int incy, float *A,
+                            int lda);
+
+__global__ void myblas_SSYR(char uplo, int n, const float *alpha,
+                            const float *x, int incx, float *A, int lda);
+
+__global__ void myblas_SSYR2(char uplo, int n, const float *alpha,
+                             const float *x, int incx, const float *y, int incy,
+                             float *A, int lda);
