@@ -1,3 +1,5 @@
+#include <cblas.h>
+#pragma once
 // ================ LEVEL 1 APIS ================
 void openblas_api_SAXPY(int n, const float *alpha, const float *x, float *y);
 
@@ -11,8 +13,8 @@ void openblas_api_SGEMV(int m, int n, const float *alpha, const float *A,
 void openblas_api_STRSV(int n, const float *A, float *x);
 
 // ================ LEVEL 3 APIS ================
-void openblas_SGEMM(int m, int n, int k, const float *alpha, const float *A,
-                    const float *B, const float *beta, float *C);
+void openblas_api_SGEMM(int m, int n, int k, const float *alpha, const float *A,
+                        const float *B, const float *beta, float *C);
 
 // Assumed to be upper triangular and not unit triangular
 void openblas_api_STRSM(int m, int n, const float *alpha, const float *A,

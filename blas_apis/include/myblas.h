@@ -1,6 +1,7 @@
 #include "level1/level1.h"
 #include "level2/level2.h"
 #include "level3/level3.h"
+#pragma once
 
 // ================ LEVEL 1 APIS ================
 template <int NB, int NT>

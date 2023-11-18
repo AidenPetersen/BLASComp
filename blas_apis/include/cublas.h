@@ -1,3 +1,5 @@
+#pragma once
+
 // ================ LEVEL 1 APIS ================
 void cublas_api_SAXPY(int n, const float *alpha, const float *x, float *y);
 

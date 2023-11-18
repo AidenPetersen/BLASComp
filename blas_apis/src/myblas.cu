@@ -127,8 +127,8 @@ void myblas_api_STRSV(int n, const float *A, float *x) {
 
 // ================ LEVEL 3 APIS ================
 template <int NB, int NT>
-void myblas_SGEMM(int m, int n, int k, const float *alpha, const float *A,
-                  const float *B, const float *beta, float *C) {
+void myblas_apo_SGEMM(int m, int n, int k, const float *alpha, const float *A,
+                      const float *B, const float *beta, float *C) {
     int size_A = m * k * sizeof(float);
     int size_B = n * k * sizeof(float);
     int size_C = m * n * sizeof(float);
@@ -151,7 +151,7 @@ void myblas_SGEMM(int m, int n, int k, const float *alpha, const float *A,
     cudaMemcpy(d_beta, beta, sizeof(float), cudaMemcpyHostToDevice);
 
     // Run kernel
-    myblas_SGEMM<<<NB, NT>>>('N', 'N', n, m, k, d_alpha, d_A, 1, d_B, 1, d_beta,
+    myblas_SGEMM<<<NB, NT>>>('N', 'N', m, n, k, d_alpha, d_A, 1, d_B, 1, d_beta,
                              d_C, 1);
 
     cudaFree(d_A);
@@ -180,7 +180,7 @@ void myblas_api_STRSM(int m, int n, const float *alpha, const float *A,
     cudaMemcpy(d_alpha, alpha, sizeof(float), cudaMemcpyHostToDevice);
 
     // Run kernel
-    myblas_STRSM<<<NB, NT>>>('L', 'L', 'N', 'N', n, m, d_alpha, d_A, 1, d_B, 1);
+    myblas_STRSM<<<NB, NT>>>('L', 'L', 'N', 'N', m, n, d_alpha, d_A, 1, d_B, 1);
 
     cudaFree(d_A);
     cudaFree(d_B);
