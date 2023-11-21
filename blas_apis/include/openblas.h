@@ -1,4 +1,3 @@
-#include <cblas.h>
 #pragma once
 // ================ LEVEL 1 APIS ================
 void openblas_api_SAXPY(int n, const float *alpha, const float *x, float *y);

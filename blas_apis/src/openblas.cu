@@ -1,3 +1,5 @@
+#include <cblas.h>
+
 #include "openblas.h"
 
 // ================ LEVEL 1 APIS ================

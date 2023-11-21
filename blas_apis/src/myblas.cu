@@ -1,8 +1,20 @@
 
+#include <stdio.h>
+
 #include "myblas.h"
 
+#define gpuErrchk(ans) \
+    { gpuAssert((ans), __FILE__, __LINE__); }
+inline void gpuAssert(cudaError_t code, const char *file, int line,
+                      bool abort = true) {
+    if (code != cudaSuccess) {
+        fprintf(stderr, "GPUassert: %s %s %d\n", cudaGetErrorString(code), file,
+                line);
+        // if (abort) exit(code);
+    }
+}
+
 // ================ LEVEL 1 APIS ================
-template <int NB, int NT>
 void myblas_api_SAXPY(int n, const float *alpha, const float *x, float *y) {
     int size = n * sizeof(float);
     // Allocate memory to GPU
@@ -19,9 +31,7 @@ void myblas_api_SAXPY(int n, const float *alpha, const float *x, float *y) {
     cudaMemcpy(d_alpha, alpha, sizeof(float), cudaMemcpyHostToDevice);
 
     // Initialize kernel and run function
-    int threadsPerBlock = n;
-    int numBlocks = 1;
-    myblas_SAXPY<<<NB, NT>>>(n, d_alpha, d_x, 1, d_y, 1);
+    myblas_SAXPY<<<n / 128, 128>>>(n, d_alpha, d_x, 1, d_y, 1);
 
     // Copy memory back
     cudaMemcpy(y, d_y, size, cudaMemcpyDeviceToHost);
@@ -32,7 +42,6 @@ void myblas_api_SAXPY(int n, const float *alpha, const float *x, float *y) {
     cudaFree(d_alpha);
 }
 
-template <int NB, int NT>
 void myblas_api_SDOT(int n, const float *x, const float *y, float *result) {
     int size = n * sizeof(float);
     // Allocate memory to GPU
@@ -48,9 +57,7 @@ void myblas_api_SDOT(int n, const float *x, const float *y, float *result) {
     cudaMemcpy(d_y, y, size, cudaMemcpyHostToDevice);
 
     // Initialize kernel and run function
-    int threadsPerBlock = n;
-    int numBlocks = 1;
-    myblas_SDOT<<<NB, NT>>>(n, d_x, 1, d_y, 1, d_result);
+    myblas_SDOT<<<n / 128, 128>>>(n, d_x, 1, d_y, 1, d_result);
 
     // Copy memory back
     cudaMemcpy(result, d_result, sizeof(float), cudaMemcpyDeviceToHost);
@@ -62,11 +69,12 @@ void myblas_api_SDOT(int n, const float *x, const float *y, float *result) {
 }
 
 // ================ LEVEL 2 APIS ================
-template <int NB, int NT>
 void myblas_api_SGEMV(int m, int n, const float *alpha, const float *A,
                       const float *x, const float *beta, float *y) {
     int size_v = m * sizeof(float);
     int size_m = n * m * sizeof(float);
+
+    // create memory stream
 
     // Allocate memory to gpu
     float *d_A;
@@ -88,8 +96,8 @@ void myblas_api_SGEMV(int m, int n, const float *alpha, const float *A,
     cudaMemcpy(d_beta, beta, sizeof(float), cudaMemcpyHostToDevice);
 
     // Run Kernel
-    myblas_SGEMV<<<NB, NT>>>('N', m, n, d_alpha, d_A, 1, d_x, 1, d_beta, d_y,
-                             1);
+    myblas_SGEMV<<<n / 128, 128>>>('N', m, n, d_alpha, d_A, 1, d_x, 1, d_beta,
+                                   d_y, 1);
     // Copy memory back from GPU
     cudaMemcpy(y, d_y, size_v, cudaMemcpyDeviceToHost);
 
@@ -102,7 +110,6 @@ void myblas_api_SGEMV(int m, int n, const float *alpha, const float *A,
 }
 
 // Assumed to be upper triangular and not unit triangular
-template <int NB, int NT>
 void myblas_api_STRSV(int n, const float *A, float *x) {
     int size_v = n * sizeof(float);
     int size_m = n * n * sizeof(float);
@@ -118,7 +125,7 @@ void myblas_api_STRSV(int n, const float *A, float *x) {
     cudaMemcpy(d_x, x, size_v, cudaMemcpyHostToDevice);
 
     // Execute kernel
-    myblas_STRSV<<<NB, NT>>>('U', 'N', 'N', n, d_A, 1, d_x, 1);
+    myblas_STRSV<<<n / 128, 128>>>('U', 'N', 'N', n, d_A, 1, d_x, 1);
 
     // Free memory in GPU
     cudaFree(d_A);
@@ -126,8 +133,7 @@ void myblas_api_STRSV(int n, const float *A, float *x) {
 }
 
 // ================ LEVEL 3 APIS ================
-template <int NB, int NT>
-void myblas_apo_SGEMM(int m, int n, int k, const float *alpha, const float *A,
+void myblas_api_SGEMM(int m, int n, int k, const float *alpha, const float *A,
                       const float *B, const float *beta, float *C) {
     int size_A = m * k * sizeof(float);
     int size_B = n * k * sizeof(float);
@@ -151,8 +157,9 @@ void myblas_apo_SGEMM(int m, int n, int k, const float *alpha, const float *A,
     cudaMemcpy(d_beta, beta, sizeof(float), cudaMemcpyHostToDevice);
 
     // Run kernel
-    myblas_SGEMM<<<NB, NT>>>('N', 'N', m, n, k, d_alpha, d_A, 1, d_B, 1, d_beta,
-                             d_C, 1);
+    dim3 threadsPerBlock(32, 32);
+    myblas_SGEMM<<<n / 32, threadsPerBlock>>>('N', 'N', m, n, k, d_alpha, d_A,
+                                              1, d_B, 1, d_beta, d_C, 1);
 
     cudaFree(d_A);
     cudaFree(d_B);
@@ -162,7 +169,6 @@ void myblas_apo_SGEMM(int m, int n, int k, const float *alpha, const float *A,
 }
 
 // Assumed to be upper triangular and not unit triangular
-template <int NB, int NT>
 void myblas_api_STRSM(int m, int n, const float *alpha, const float *A,
                       float *B) {
     int size = n * m * sizeof(float);
@@ -180,7 +186,9 @@ void myblas_api_STRSM(int m, int n, const float *alpha, const float *A,
     cudaMemcpy(d_alpha, alpha, sizeof(float), cudaMemcpyHostToDevice);
 
     // Run kernel
-    myblas_STRSM<<<NB, NT>>>('L', 'L', 'N', 'N', m, n, d_alpha, d_A, 1, d_B, 1);
+    dim3 threadsPerBlock(n, n);
+    myblas_STRSM<<<n / 128, threadsPerBlock>>>('L', 'L', 'N', 'N', m, n,
+                                               d_alpha, d_A, 1, d_B, 1);
 
     cudaFree(d_A);
     cudaFree(d_B);

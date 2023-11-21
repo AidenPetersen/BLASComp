@@ -13,8 +13,8 @@ void cublas_api_SGEMV(int m, int n, const float *alpha, const float *A,
 void cublas_api_STRSV(int n, const float *A, float *x);
 
 // ================ LEVEL 3 APIS ================
-void cublas_SGEMM(int m, int n, int k, const float *alpha, const float *A,
-                  const float *B, const float *beta, float *C);
+void cublas_api_SGEMM(int m, int n, int k, const float *alpha, const float *A,
+                      const float *B, const float *beta, float *C);
 
 // Assumed to be upper triangular and not unit triangular
 void cublas_api_STRSM(int m, int n, const float *alpha, const float *A,
